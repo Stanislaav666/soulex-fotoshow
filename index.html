@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Soulex Fotoshow</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:#0a0a0a;overflow:hidden;
+  font-family:'Segoe UI',-apple-system,system-ui,sans-serif;
+  color:#fff;
+}
+
+/* ── Startscherm ─────────────────────────── */
+#start-screen{
+  position:fixed;inset:0;z-index:100;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:#0a0a0a;
+}
+#start-screen.hidden{display:none}
+.start-title{
+  font-size:min(100px,14vw);font-weight:700;color:#f0c040;
+  letter-spacing:-2px;line-height:1;
+}
+.start-subtitle{
+  font-size:min(32px,4.5vw);font-weight:300;color:#aaa;
+  margin-top:8px;letter-spacing:2px;
+}
+.start-period{
+  font-size:min(22px,3vw);color:#666;margin-top:6px;
+}
+.settings{
+  margin-top:50px;display:flex;flex-direction:column;
+  align-items:center;gap:28px;
+}
+.setting-group{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.setting-label{
+  font-size:14px;color:#888;text-transform:uppercase;
+  letter-spacing:2px;font-weight:600;
+}
+.radio-group{
+  display:flex;gap:4px;
+}
+.radio-group label{
+  padding:10px 24px;border-radius:6px;cursor:pointer;
+  font-size:16px;color:#999;background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  transition:all 0.2s;
+}
+.radio-group input{display:none}
+.radio-group input:checked+span{
+  color:#f0c040;
+}
+.radio-group label:has(input:checked){
+  background:rgba(240,192,64,0.1);
+  border-color:rgba(240,192,64,0.3);
+}
+.speed-control{
+  display:flex;align-items:center;gap:16px;
+}
+.speed-control input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:200px;height:4px;background:rgba(255,255,255,0.15);
+  border-radius:2px;outline:none;
+}
+.speed-control input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;background:#f0c040;
+  border-radius:50%;cursor:pointer;
+}
+.speed-value{
+  font-size:18px;color:#f0c040;font-weight:600;
+  min-width:40px;text-align:center;
+}
+#btn-start{
+  margin-top:40px;padding:16px 60px;
+  font-size:20px;font-weight:600;color:#0a0a0a;
+  background:#f0c040;border:none;border-radius:8px;
+  cursor:pointer;letter-spacing:1px;
+  transition:transform 0.15s,box-shadow 0.15s;
+}
+#btn-start:hover{
+  transform:scale(1.04);
+  box-shadow:0 0 30px rgba(240,192,64,0.3);
+}
+.start-count{
+  margin-top:20px;font-size:15px;color:#555;
+}
+
+/* ── Slideshow ───────────────────────────── */
+#slideshow{position:fixed;inset:0;display:none}
+#slideshow.active{display:block}
+.slide{
+  position:absolute;inset:0;
+  background-size:contain;background-repeat:no-repeat;background-position:center;
+  opacity:0;will-change:opacity,transform;
+}
+.slide.active{opacity:1}
+
+/* ── Titelkaart ──────────────────────────── */
+#title-card{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:#0a0a0a;z-index:20;
+  opacity:0;pointer-events:none;transition:opacity 0.8s ease;
+}
+#title-card.visible{opacity:1}
+.title-year{
+  font-size:min(120px,15vw);font-weight:700;color:#f0c040;
+  line-height:1;letter-spacing:-2px;
+}
+.title-event{
+  font-size:min(48px,5vw);font-weight:300;color:#fff;
+  margin-top:12px;letter-spacing:1px;text-align:center;max-width:80vw;
+}
+.title-count{
+  font-size:18px;color:#555;margin-top:20px;font-weight:400;
+}
+
+/* ── Info overlay onderaan ───────────────── */
+#info-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:10;
+  pointer-events:none;transition:opacity 0.5s;
+  background:linear-gradient(transparent,rgba(0,0,0,0.7));
+  padding:40px 40px 18px;
+  display:flex;align-items:flex-end;justify-content:space-between;
+}
+.info-text{
+  font-size:min(22px,3vw);font-weight:400;color:rgba(255,255,255,0.85);
+  text-shadow:0 1px 6px rgba(0,0,0,0.8);
+}
+.info-counter{
+  font-size:14px;color:rgba(255,255,255,0.4);
+}
+
+/* ── Voortgangsbalk ──────────────────────── */
+#progress-bar{
+  position:fixed;bottom:0;left:0;right:0;height:3px;
+  background:rgba(255,255,255,0.08);z-index:15;transition:opacity 0.5s;
+}
+#progress-fill{height:100%;background:#f0c040;width:0%}
+
+/* ── Knoppen ─────────────────────────────── */
+#controls{
+  position:fixed;bottom:30px;right:40px;z-index:30;
+  opacity:0;transition:opacity 0.3s;
+  display:flex;align-items:center;gap:10px;
+}
+#controls.visible{opacity:1}
+#controls button{
+  background:rgba(255,255,255,0.12);color:#fff;border:none;
+  width:44px;height:44px;border-radius:50%;font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  transition:background 0.2s;
+}
+#controls button:hover{background:rgba(240,192,64,0.3)}
+#btn-back{font-size:13px;width:auto;padding:0 16px;border-radius:22px}
+</style>
+</head>
+<body>
+
+<!-- Startscherm -->
+<div id="start-screen">
+  <div class="start-title">SOULEX</div>
+  <div class="start-subtitle">Fotoshow</div>
+  <div class="start-period">1990 — 1990</div>
+
+  <div class="settings">
+    <div class="setting-group">
+      <div class="setting-label">Volgorde</div>
+      <div class="radio-group">
+        <label><input type="radio" name="order" value="chrono" checked><span>Chronologisch</span></label>
+        <label><input type="radio" name="order" value="random"><span>Willekeurig</span></label>
+      </div>
+    </div>
+    <div class="setting-group">
+      <div class="setting-label">Snelheid</div>
+      <div class="speed-control">
+        <span style="color:#666;font-size:13px">Snel</span>
+        <input type="range" id="speed-slider" min="2" max="15" value="5" step="1">
+        <span style="color:#666;font-size:13px">Langzaam</span>
+        <span class="speed-value" id="speed-value">5s</span>
+      </div>
+    </div>
+  </div>
+  <button id="btn-start" onclick="startShow()">&#9654;&ensp;Start</button>
+  <div class="start-count">50 foto's uit 2 evenementen</div>
+</div>
+
+<!-- Slideshow -->
+<div id="slideshow">
+  <div class="slide" id="slide-a"></div>
+  <div class="slide" id="slide-b"></div>
+</div>
+<div id="title-card">
+  <div class="title-year" id="title-year"></div>
+  <div class="title-event" id="title-event"></div>
+  <div class="title-count" id="title-count"></div>
+</div>
+<div id="info-bar">
+  <div class="info-text" id="info-text"></div>
+  <div class="info-counter" id="info-counter"></div>
+</div>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+<div id="controls">
+  <button id="btn-back" onclick="backToStart()">&#9632; Stop</button>
+  <button onclick="prevSlide()">&#9664;</button>
+  <button id="btn-pp" onclick="togglePlayPause()">&#10074;&#10074;</button>
+  <button onclick="nextSlide()">&#9654;</button>
+</div>
+
+<script>
+var S=[["fotos/Old%20School%20Soulex/Datum%20onbekend/Dia_4.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5110.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5114.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5116.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5120.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5124.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5127.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5128.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5131.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/DSCF5133.JPG", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/scan0001.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/scan0002.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/Scannen0001.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/Scannen0002.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/Scannen0004.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/Scannen0005.jpg", 0], ["fotos/Old%20School%20Soulex/Datum%20onbekend/Scannen0008.jpg", 0], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron1.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron2.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron3.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron4.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron5.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Desertron6.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking1.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking2.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking3.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking4.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking5.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking6.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking7.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking8.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking9.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking10.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking11.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking12.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking13.jpg", 1], ["fotos/Old%20School%20Soulex/1990_11_24/1990_11_24_Look%20Whos%20Talking14.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium1.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium2.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium3.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium4.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium5.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium6.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium7.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium8.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium_Arabesque1.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium_Arabesque2.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium_Arabesque3.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium_Jazzo%20What1.jpg", 1], ["fotos/Old%20School%20Soulex/1990_12_26_Open%20Podium/1990_12_26_Open%20Podium_Jazzo%20What2.jpg", 1]];
+var G=[[null, "Open Podium", 17], [1990, "Open Podium", 33]];
+var DUR=5;
+var orderMode='chrono';
+var playOrder=[];
+
+var idx=-1,playing=true,timer=null,tt1=null,tt2=null,useA=true,pre={},hct=null;
+var sA=document.getElementById('slide-a');
+var sB=document.getElementById('slide-b');
+var tc=document.getElementById('title-card');
+var tY=document.getElementById('title-year');
+var tE=document.getElementById('title-event');
+var tC=document.getElementById('title-count');
+var ib=document.getElementById('info-bar');
+var it=document.getElementById('info-text');
+var ic=document.getElementById('info-counter');
+var pb=document.getElementById('progress-bar');
+var pf=document.getElementById('progress-fill');
+var ctrl=document.getElementById('controls');
+var bpp=document.getElementById('btn-pp');
+var ss=document.getElementById('start-screen');
+var sl=document.getElementById('slideshow');
+
+var speedSlider=document.getElementById('speed-slider');
+var speedValue=document.getElementById('speed-value');
+speedSlider.addEventListener('input',function(){
+  speedValue.textContent=this.value+'s';
+});
+
+function buildPlayOrder(){
+  playOrder=[];
+  for(var i=0;i<S.length;i++) playOrder.push(i);
+  if(orderMode==='random'){
+    for(var i=playOrder.length-1;i>0;i--){
+      var j=Math.floor(Math.random()*(i+1));
+      var t=playOrder[i];playOrder[i]=playOrder[j];playOrder[j]=t;
+    }
+  }
+}
+
+function startShow(){
+  DUR=parseInt(speedSlider.value);
+  orderMode=document.querySelector('input[name="order"]:checked').value;
+  buildPlayOrder();
+  ss.classList.add('hidden');
+  sl.classList.add('active');
+  document.body.style.cursor='none';
+  idx=-1;playing=true;
+  bpp.innerHTML='&#10074;&#10074;';
+  showSlide(0);
+}
+
+function backToStart(){
+  clearTimeout(timer);cancelTitle();
+  sl.classList.remove('active');
+  ss.classList.remove('hidden');
+  document.body.style.cursor='default';
+  sA.classList.remove('active');sB.classList.remove('active');
+  sA.style.backgroundImage='';sB.style.backgroundImage='';
+  idx=-1;playing=true;pre={};
+}
+
+function preload(posIdx,n){
+  for(var i=1;i<=n;i++){
+    var pi=(posIdx+i)%playOrder.length;
+    var si=playOrder[pi];
+    if(!pre[si]){var img=new Image();img.src=S[si][0];pre[si]=img}
+  }
+  var ks=Object.keys(pre);
+  if(ks.length>10){
+    for(var k=0;k<ks.length-10;k++) delete pre[ks[k]];
+  }
+}
+
+function showTitle(gi,cb){
+  cancelTitle();
+  var g=G[gi];
+  tY.textContent=g[0]||'';
+  tE.textContent=g[1];
+  tC.textContent=g[2]+(g[2]===1?' foto':" foto's");
+  tc.classList.add('visible');
+  ib.style.opacity='0';pb.style.opacity='0';
+  tt1=setTimeout(function(){
+    tc.classList.remove('visible');
+    tt2=setTimeout(function(){
+      ib.style.opacity='1';pb.style.opacity='1';
+      cb();
+    },800);
+  },2500);
+}
+
+function cancelTitle(){
+  clearTimeout(tt1);clearTimeout(tt2);
+  tc.classList.remove('visible');
+  ib.style.opacity='1';pb.style.opacity='1';
+}
+
+function showPhoto(posIdx){
+  var si=playOrder[posIdx];
+  var slide=S[si],src=slide[0],gi=slide[1],g=G[gi];
+  var inc=useA?sA:sB,out=useA?sB:sA;
+
+  inc.style.transition='none';
+  inc.style.transform='scale(1) translate(0px,0px)';
+  inc.style.backgroundImage='url("'+src+'")';
+  inc.offsetWidth;
+
+  var sc=(1.03+Math.random()*0.05).toFixed(3);
+  var tx=((Math.random()-0.5)*3).toFixed(2);
+  var ty=((Math.random()-0.5)*3).toFixed(2);
+  inc.style.transition='opacity 1.2s ease-in-out,transform '+(DUR+1)+'s ease-out';
+  inc.style.transform='scale('+sc+') translate('+tx+'%,'+ty+'%)';
+  inc.classList.add('active');
+  out.classList.remove('active');
+  useA=!useA;
+  idx=posIdx;
+
+  var label=g[1];
+  if(g[0]) label+='  \u2014  '+g[0];
+  it.textContent=label;
+  ic.textContent=(posIdx+1)+' / '+S.length;
+
+  pf.style.transition='none';pf.style.width='0%';
+  pf.offsetWidth;
+  pf.style.transition='width '+DUR+'s linear';pf.style.width='100%';
+
+  preload(posIdx,3);
+  schedNext();
+}
+
+function showSlide(posIdx){
+  if(orderMode==='chrono'){
+    var prevGi=idx>=0?S[playOrder[idx]][1]:-1;
+    var nextGi=S[playOrder[posIdx]][1];
+    if(nextGi!==prevGi){
+      showTitle(nextGi,function(){showPhoto(posIdx)});
+      return;
+    }
+  }
+  showPhoto(posIdx);
+}
+
+function schedNext(){
+  clearTimeout(timer);
+  if(!playing)return;
+  timer=setTimeout(function(){
+    showSlide((idx+1)%playOrder.length);
+  },DUR*1000);
+}
+
+function nextSlide(){
+  cancelTitle();clearTimeout(timer);
+  var ni=idx<0?0:(idx+1)%playOrder.length;
+  showPhoto(ni);
+}
+function prevSlide(){
+  cancelTitle();clearTimeout(timer);
+  var ni=idx<0?0:(idx-1+playOrder.length)%playOrder.length;
+  showPhoto(ni);
+}
+function togglePlayPause(){
+  playing=!playing;
+  bpp.innerHTML=playing?'&#10074;&#10074;':'&#9654;';
+  if(playing)schedNext();else clearTimeout(timer);
+}
+function toggleFs(){
+  if(!document.fullscreenElement)document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+function showCtrl(){
+  ctrl.classList.add('visible');document.body.style.cursor='default';
+  clearTimeout(hct);
+  hct=setTimeout(function(){
+    if(playing&&sl.classList.contains('active')){
+      ctrl.classList.remove('visible');document.body.style.cursor='none';
+    }
+  },3000);
+}
+document.addEventListener('mousemove',function(){
+  if(sl.classList.contains('active'))showCtrl();
+});
+
+document.addEventListener('keydown',function(e){
+  if(!sl.classList.contains('active')){
+    if(e.key==='Enter'){e.preventDefault();startShow()}
+    return;
+  }
+  showCtrl();
+  switch(e.key){
+    case' ':case'k':e.preventDefault();togglePlayPause();break;
+    case'ArrowRight':case'l':nextSlide();break;
+    case'ArrowLeft':case'j':prevSlide();break;
+    case'f':toggleFs();break;
+    case'Escape':backToStart();break;
+  }
+});
+</script>
+</body>
+</html>
