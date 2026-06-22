@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <title>Soulex Fotoshow</title>
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Rock+Salt&family=Just+Another+Hand&family=Homemade+Apple&family=Permanent+Marker&family=Nanum+Pen+Script&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -82,34 +82,34 @@ body{
 .polaroid{
   position:absolute;
   background:linear-gradient(145deg,#f8f6f0,#eae7df);
-  padding:clamp(10px,1.5vw,18px) clamp(10px,1.5vw,18px) clamp(50px,8vh,80px);
+  padding:clamp(10px,1.5vw,18px) clamp(10px,1.5vw,18px) clamp(62px,10vh,105px);
   box-shadow:
     0 2px 6px rgba(0,0,0,0.25),
     0 10px 30px rgba(0,0,0,0.35),
     inset 0 0 60px rgba(0,0,0,0.03);
   transform-origin:center center;
   opacity:0;
-  transition:opacity 0.6s ease,transform 0.7s cubic-bezier(0.2,0.8,0.3,1);
+  -webkit-transition:opacity 0.6s ease,transform 1.2s cubic-bezier(0.2,0.7,0.3,1.08);
+  transition:opacity 0.6s ease,transform 1.2s cubic-bezier(0.2,0.7,0.3,1.08);
 }
 .polaroid.visible{opacity:1}
 .polaroid.removing{opacity:0;transition:opacity 0.4s ease}
 
 .polaroid .photo{
   display:block;
-  max-height:clamp(400px,100vh,860px);
-  max-width:clamp(400px,100vw,1400px);
+  height:85vh;
   border:1px solid rgba(0,0,0,0.06);
 }
 
 .polaroid-text{
   position:absolute;
-  bottom:clamp(8px,1.5vh,18px);
+  bottom:clamp(4px,1vh,12px);
   left:clamp(14px,2vw,25px);
   right:clamp(40px,5vw,60px);
   font-family:'Caveat',cursive;
   font-size:clamp(18px,2.8vw,30px);
   color:#4a4540;
-  line-height:1.2;
+  line-height:1.1;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
@@ -223,7 +223,7 @@ var G=[[null, "Open Podium", 17], [1990, "Open Podium", 50], [1991, "Open Podium
 var DUR=5;
 var orderMode='chrono';
 var playOrder=[];
-var MAX_YEAR=2012;
+var MAX_YEAR=null;
 
 var idx=-1,playing=true,timer=null,tt1=null,tt2=null,pre={},hct=null;
 var stack=[];
@@ -335,11 +335,12 @@ function createPolaroid(posIdx){
   pol.className='polaroid';
   pol.style.zIndex=zCounter++;
 
-  var rot=((Math.random()-0.5)*16).toFixed(1);
-  var tx=((Math.random()-0.5)*50).toFixed(0);
-  var ty=((Math.random()-0.5)*30).toFixed(0);
+  var rot=((Math.random()-0.5)*22).toFixed(1);
+  var tx=((Math.random()-0.5)*70).toFixed(0);
+  var ty=((Math.random()-0.5)*50).toFixed(0);
+  var startRot=(parseFloat(rot)+(Math.random()>0.5?1:-1)*15).toFixed(1);
   pol.dataset.rot=rot;pol.dataset.tx=tx;pol.dataset.ty=ty;
-  pol.style.transform='rotate('+rot+'deg) translate('+tx+'px,'+ty+'px) scale(1.12)';
+  pol.style.transform='rotate('+startRot+'deg) translate('+(tx*1.8)+'px,'+(ty*1.8)+'px) scale(1.18)';
 
   var img=document.createElement('img');
   img.className='photo';img.src=src;img.alt='';
@@ -351,6 +352,10 @@ function createPolaroid(posIdx){
 
   var text=document.createElement('div');
   text.className='polaroid-text';
+  var handFonts=['Caveat','Rock Salt','Just Another Hand','Homemade Apple','Permanent Marker','Nanum Pen Script'];
+  var inkColors=['#dd1111','#0033cc','#222222','#009933'];
+  text.style.fontFamily="'"+handFonts[Math.floor(Math.random()*handFonts.length)]+"',cursive";
+  text.style.color=inkColors[Math.floor(Math.random()*inkColors.length)];
   var label=g[1];
   if(g[0]) label+=' \u2014 '+g[0];
   text.textContent=label;
